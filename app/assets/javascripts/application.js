@@ -13,4 +13,9 @@
 //= require jquery
 //= require jquery_ujs
 //= require turbolinks
+//= require swfobject
 //= require_tree .
+
+function log(msg){
+    console.log(msg);
+}

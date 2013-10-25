@@ -1,0 +1,151 @@
+<input type="text" id="title_box" placeholder="Song Title"/>
+<input type="text" id="artist_box" placeholder="Artist"/>
+<input type="submit" onclick="loadVideo();" value="Load"/>
+
+<table>
+  <tr>
+    <td>
+      <div id="videoDiv">Loading...</div>
+    </td>
+    <td valign="top">
+      <div id="videoInfo">
+        <p>Player state: <span id="playerState">--</span></p>
+
+        <p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span
+        id="videoDuration">--:--</span></p>
+
+        <p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a
+        href="javascript:void(0);" onclick="pauseVideo();">Pause</a>
+        </p>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div id="lyrics_div"></div>
+
+
+
+
+
+
+
+<script>
+
+
+    // Update a particular HTML element with a new value
+    function updateHTML(elmId, value) {
+        document.getElementById(elmId).innerHTML = value;
+    }
+
+    // This function is called when an error is thrown by the player
+    function onPlayerError(errorCode) {
+        alert("An error occured of type:" + errorCode);
+    }
+
+    // This function is called when the player changes state
+    function onPlayerStateChange(newState) {
+
+    }
+
+    // Display information about the current state of the player
+    function updatePlayerInfo() {
+        // Also check that at least one function exists since when IE unloads the
+        // page, it will destroy the SWF before clearing the interval.
+        if (ytplayer && ytplayer.getDuration) {
+            updateHTML("videoDuration", ytplayer.getDuration());
+            updateHTML("videoCurrentTime", ytplayer.getCurrentTime());
+        }
+    }
+
+
+    function playVideo() {
+        if (ytplayer) {
+            ytplayer.playVideo();
+        }
+    }
+
+    function pauseVideo() {
+        if (ytplayer) {
+            ytplayer.pauseVideo();
+        }
+    }
+
+
+    function loadVideo() {
+        var title = $("#title_box").val();
+        var artist = $("#artist_box").val();
+        var mods = '-cover -parody';
+        var q = 'intitle:"' + title + '" intitle:"' + artist + '"';
+        log(q);
+        var params = {
+            "part": "id",
+            "maxResults": 1,
+            "order": "viewCount",
+            "safeSearch": "none",
+            "type": "video",
+            "videoEmbeddable": true,
+            "key": "AIzaSyALsmfpU8Pvnb84oAILcWTMFXtzdMwGZhk",
+            "q": q
+        };
+
+        $.ajax({
+            url: "https://www.googleapis.com/youtube/v3/search",
+            data: params
+        })
+                .done(function (data) {
+                    var videoId = data.items[0].id.videoId;
+                    log(videoId);
+                    ytplayer.cueVideoById(videoId);
+                });
+
+        $.ajax({
+            url: "<%=request.base_url%>" + "/home/lyrics",
+            data: {title: title, artist: artist}
+        })
+                .done(function (data) {
+                    loadLyrics(data.lines)
+                });
+    }
+
+    function loadLyrics(lyrics) {
+        var div = $('#lyrics_div');
+        div.html('');
+
+        $.each(lyrics, function (index, value) {
+           div.append("<p>" + value + "</p>")
+        });
+
+    }
+
+
+    // This function is automatically called by the player once it loads
+    function onYouTubePlayerReady(playerId) {
+        ytplayer = document.getElementById("ytPlayer");
+        // This causes the updatePlayerInfo function to be called every 250ms to
+        // get fresh data from the player
+        setInterval(updatePlayerInfo, 250);
+        updatePlayerInfo();
+        ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
+        ytplayer.addEventListener("onError", "onPlayerError");
+        //Load an initial video into the player
+
+        ytplayer.cueVideoById("ylLzyHk54Z0");
+
+    }
+
+    // The "main method" of this sample. Called when someone clicks "Run".
+    function loadPlayer() {
+        // Lets Flash from another domain call JavaScript
+        var params = { allowScriptAccess: "always" };
+        // The element id of the Flash embed
+        var atts = { id: "ytPlayer" };
+        // All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
+        swfobject.embedSWF("http://www.youtube.com/apiplayer?" +
+                "version=3&enablejsapi=1&playerapiid=player1",
+                "videoDiv", "480", "295", "9", null, null, params, atts);
+    }
+
+    $(loadPlayer());
+
+</script>
