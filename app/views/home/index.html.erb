@@ -1,36 +1,45 @@
-<input type="text" id="title_box" placeholder="Song Title"/>
-<input type="text" id="artist_box" placeholder="Artist"/>
-<input type="submit" onclick="loadVideo();" value="Load"/>
+<div id="song_input">
+  <h2>Enter a Song</h2>
 
-<table>
-  <tr>
-    <td>
-      <div id="videoDiv">Loading...</div>
-    </td>
-    <td valign="top">
-      <div id="videoInfo">
-        <p>Player state: <span id="playerState">--</span></p>
+  <p id="error_message">Error matching song</p>
 
-        <p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span
-        id="videoDuration">--:--</span></p>
+  <form action="" method="">
+    <input type="text" id="title_box" placeholder="Song Title"/> </br>
+    <input type="text" id="artist_box" placeholder="Artist"/> </br>
+    <!-- Return false so request is not sent and only the on click function runs -->
+    <input type="submit" onclick="loadVideo(); return false;" value="Load"/>
+  </form>
+</div>
 
-        <p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a
-        href="javascript:void(0);" onclick="pauseVideo();">Pause</a>
-        </p>
-      </div>
-    </td>
-  </tr>
-</table>
+<div id="game_div">
+  <table>
+    <tr>
+      <td>
+        <div id="videoDiv">Loading...</div>
+      </td>
+      <td valign="top">
+        <div id="videoInfo">
+          <p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span
+          id="videoDuration">--:--</span></p>
 
-<div id="lyrics_div"></div>
+          <p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a
+          href="javascript:void(0);" onclick="pauseVideo();">Pause</a>
+          </p>
+        </div>
+      </td>
+    </tr>
+  </table>
 
-
-
-
-
+  <div id="lyrics_div"></div>
+</div>
 
 
 <script>
+    $(function () {
+        loadPlayer();
+
+        //$('#game_div').hide();
+    });
 
 
     // Update a particular HTML element with a new value
@@ -73,6 +82,7 @@
 
 
     function loadVideo() {
+        $('#error_message').hide();
         var title = $("#title_box").val();
         var artist = $("#artist_box").val();
         var mods = '-cover -parody';
@@ -104,8 +114,18 @@
             data: {title: title, artist: artist}
         })
                 .done(function (data) {
-                    loadLyrics(data.lines)
+                    log(data);
+                    if (!data) {
+                        lyricsError();
+                    } else {
+                        loadLyrics(data.lines);
+                    }
+
                 });
+    }
+
+    function lyricsError(){
+        $('#error_message').show();
     }
 
     function loadLyrics(lyrics) {
@@ -113,7 +133,7 @@
         div.html('');
 
         $.each(lyrics, function (index, value) {
-           div.append("<p>" + value + "</p>")
+            div.append("<p>" + value + "</p>")
         });
 
     }
@@ -128,9 +148,8 @@
         updatePlayerInfo();
         ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
         ytplayer.addEventListener("onError", "onPlayerError");
-        //Load an initial video into the player
 
-        ytplayer.cueVideoById("ylLzyHk54Z0");
+        //ytplayer.cueVideoById("ylLzyHk54Z0");
 
     }
 
@@ -146,6 +165,5 @@
                 "videoDiv", "480", "295", "9", null, null, params, atts);
     }
 
-    $(loadPlayer());
 
 </script>
