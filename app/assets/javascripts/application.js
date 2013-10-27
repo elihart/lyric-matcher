@@ -19,3 +19,19 @@
 function log(msg){
     console.log(msg);
 }
+
+// need to use visibility attribute instead of display because youtube player
+// swfobject can't initialize when diplay:none
+jQuery.fn.visible = function () {
+    return this.css('visibility', 'visible');
+};
+
+jQuery.fn.invisible = function () {
+    return this.css('visibility', 'hidden');
+};
+
+String.prototype.capitalize = function () {
+    return this.replace(/(?:^|\s)\S/g, function (a) {
+        return a.toUpperCase();
+    });
+};

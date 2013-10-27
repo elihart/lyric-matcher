@@ -20,3 +20,35 @@ body {
   color: red;
   display: none;
 }
+
+#playerDiv {
+  visibility: hidden;
+  margin-top: 100px;
+  margin-left: 300px;
+}
+
+#playerTable {
+
+}
+
+#songTitle {
+  text-align: center;
+  font-size: 150%;
+  margin-bottom: 0;
+}
+
+#artistName {
+  text-align: center;
+  font-size: 120%;
+  margin-top: 0;
+}
+
+#instructions {
+  text-align: center;
+  font-weight: bold;
+  color: blue;
+}
+
+#currentLine {
+  background-color: yellow;
+}

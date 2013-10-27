@@ -1,44 +1,53 @@
 <div id="song_input">
   <h2>Enter a Song</h2>
 
-  <p id="error_message">Error matching song</p>
+  <p id="error_message">Error finding song</p>
 
   <form action="" method="">
-    <input type="text" id="title_box" placeholder="Song Title"/> </br>
+    <input type="text" id="title_box" placeholder="Song Title" autofocus/> </br>
     <input type="text" id="artist_box" placeholder="Artist"/> </br>
-    <!-- Return false so request is not sent and only the on click function runs -->
-    <input type="submit" onclick="loadVideo(); return false;" value="Load"/>
+    <!-- Return false so request is not sent but the onclick function runs -->
+    <input type="submit" onclick="loadSong(); return false;" value="Load"/>
   </form>
 </div>
 
-<div id="game_div">
-  <table>
+<div id="playerDiv">
+  <table id="playerTable">
     <tr>
       <td>
         <div id="videoDiv">Loading...</div>
       </td>
       <td valign="top">
+        <div id="lyricsDiv">
+
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
         <div id="videoInfo">
           <p>Current Time: <span id="videoCurrentTime">--:--</span> | Duration: <span
           id="videoDuration">--:--</span></p>
 
           <p>Controls: <a href="javascript:void(0);" onclick="playVideo();">Play</a> | <a
-          href="javascript:void(0);" onclick="pauseVideo();">Pause</a>
+          href="javascript:void(0);" onclick="pauseVideo();">Pause</a> | <a
+          href="javascript:void(0);" onclick="showSongSelect();">New Song</a>
           </p>
         </div>
       </td>
     </tr>
   </table>
 
-  <div id="lyrics_div"></div>
 </div>
 
 
 <script>
+    // the youtube player flash object
+    var ytPlayer;
+    var lyricPlayer;
+
     $(function () {
         loadPlayer();
-
-        //$('#game_div').hide();
     });
 
 
@@ -61,33 +70,50 @@
     function updatePlayerInfo() {
         // Also check that at least one function exists since when IE unloads the
         // page, it will destroy the SWF before clearing the interval.
-        if (ytplayer && ytplayer.getDuration) {
-            updateHTML("videoDuration", ytplayer.getDuration());
-            updateHTML("videoCurrentTime", ytplayer.getCurrentTime());
+        if (ytPlayer && ytPlayer.getDuration) {
+            updateHTML("videoDuration", ytPlayer.getDuration());
+            updateHTML("videoCurrentTime", ytPlayer.getCurrentTime());
         }
     }
 
 
     function playVideo() {
-        if (ytplayer) {
-            ytplayer.playVideo();
+        if (ytPlayer) {
+            ytPlayer.playVideo();
         }
     }
 
     function pauseVideo() {
-        if (ytplayer) {
-            ytplayer.pauseVideo();
+        if (ytPlayer) {
+            ytPlayer.pauseVideo();
         }
     }
 
+    // hide the player and show the form to choose a song
+    function showSongSelect() {
+        lyricPlayer.stop();
+        $('#playerDiv').invisible();
+        $('#song_input').show();
+        $('#title_box').focus();
+    }
 
-    function loadVideo() {
+    // hide the song select form and show the player
+    function showPlayer(data) {
+        $('#song_input').hide();
+        $('#playerDiv').visible();
+        lyricPlayer.loadSong(data, recordSongResults);
+    }
+
+    // get the song title and artist from the song select form
+    // and attempt to load the video and lyrics in the player
+    function loadSong() {
         $('#error_message').hide();
         var title = $("#title_box").val();
         var artist = $("#artist_box").val();
+
+        // search youtube for the song
         var mods = '-cover -parody';
         var q = 'intitle:"' + title + '" intitle:"' + artist + '"';
-        log(q);
         var params = {
             "part": "id",
             "maxResults": 1,
@@ -105,10 +131,11 @@
         })
                 .done(function (data) {
                     var videoId = data.items[0].id.videoId;
-                    log(videoId);
-                    ytplayer.cueVideoById(videoId);
+                    ytPlayer.loadVideoById(videoId);
                 });
 
+
+        // get lyrics
         $.ajax({
             url: "<%=request.base_url%>" + "/home/lyrics",
             data: {title: title, artist: artist}
@@ -118,14 +145,14 @@
                     if (!data) {
                         lyricsError();
                     } else {
-                        loadLyrics(data.lines);
+                        showPlayer(data);
                     }
-
                 });
     }
 
-    function lyricsError(){
+    function lyricsError() {
         $('#error_message').show();
+        $('#title_box').focus();
     }
 
     function loadLyrics(lyrics) {
@@ -141,15 +168,19 @@
 
     // This function is automatically called by the player once it loads
     function onYouTubePlayerReady(playerId) {
-        ytplayer = document.getElementById("ytPlayer");
+        ytPlayer = document.getElementById("ytPlayer");
         // This causes the updatePlayerInfo function to be called every 250ms to
         // get fresh data from the player
         setInterval(updatePlayerInfo, 250);
         updatePlayerInfo();
-        ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
-        ytplayer.addEventListener("onError", "onPlayerError");
+        ytPlayer.addEventListener("onStateChange", "onPlayerStateChange");
+        ytPlayer.addEventListener("onError", "onPlayerError");
 
-        //ytplayer.cueVideoById("ylLzyHk54Z0");
+        //ytPlayer.cueVideoById("ylLzyHk54Z0");
+        lyricPlayer = new LyricPlayer(ytPlayer, 'lyricsDiv');
+
+        // loading done, show song selector
+        log("player loaded");
 
     }
 
@@ -163,6 +194,10 @@
         swfobject.embedSWF("http://www.youtube.com/apiplayer?" +
                 "version=3&enablejsapi=1&playerapiid=player1",
                 "videoDiv", "480", "295", "9", null, null, params, atts);
+    }
+
+    function recordSongResults(songData) {
+
     }
 
 
